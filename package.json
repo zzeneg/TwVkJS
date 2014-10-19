@@ -1,0 +1,24 @@
+{
+  "name": "TwVk",
+  "version": "1.0.0",
+  "description": "Automatic crossposting from twitter to vk.com",
+  "main": "twvk.js",
+  "dependencies": {
+    "jsonfile": "^2.0.0",
+    "restler": "^3.2.2",
+    "twitter": "^0.2.9",
+    "vksdk": "^4.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "evilkov",
+  "license": "ISC",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-concurrent": "^1.0.0",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-nodemon": "^0.3.0",
+    "grunt-ts": "^1.12.1"
+  }
+}
