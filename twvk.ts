@@ -8,11 +8,16 @@ http://api.eyeem.com/v2/oauth/token?grant_type=authorization_code&client_id={CLI
 */
 
 /// <reference path="typings\node\node.d.ts" />
+/// <reference path="typings\q\q.d.ts" />
+
+import Q = require('q');
+
+var config = require('./config.json');
 
 var restler = require('restler');
 var twitter = require('twitter');
 var vksdk = require('vksdk');
-var config = require('./config.json');
+var fb = require('fb');
 
 module Twvk {
     export interface IUser {
@@ -26,8 +31,6 @@ module Twvk {
     export class App {
 
         private currentUser: IUser;
-        private vk: any;
-
 
         public static init()
         {
@@ -64,7 +67,7 @@ module Twvk {
                         if (!this.currentUser.sendRetweets) {
                             return;
                         }
-                        
+
                         text = 'RT ' + retweet.user.screen_name + ': ' + retweet.text;
                     }
 
@@ -80,26 +83,28 @@ module Twvk {
                         }
                     }
 
-                    this.vk = new vksdk({mode: 'oauth'});
-                    this.vk.setToken( { token : this.currentUser.vkToken });
+                    var vk = new Vk(this.currentUser.vkToken);
 
                     if (eyeemPhotoId) {
-                        this.getEyeEmPhotoUrlById(eyeemPhotoId, (photoId) => {
-                            this.vk.request('wall.post', {'message': text,'attachments': photoId});
+                        var eyeEm = new EyeEm(this.currentUser.eyeEmToken);
+                        eyeEm.getEyeEmPhotoUrlById(eyeemPhotoId).then((photoUrl) => {
+                            vk.uploadPhoto(photoUrl).then((photoId) => {
+                                vk.wallPost(text, photoId);
+                                return;
+                            });
                         });
-                        return;
                     }
 
                     var media = tweet.entities.media;
                     if (media) {
                         var photoUrl =  media[0].media_url;
-                        this.uploadPhoto(photoUrl, (photoId) => {
-                            this.vk.request('wall.post', {'message': text,'attachments': photoId});
+                        vk.uploadPhoto(photoUrl).then((photoId) => {
+                            vk.wallPost(text, photoId);
+                            return;
                         });
-                        return;
                     }
 
-                    this.vk.request('wall.post', {'message': text});
+                    vk.wallPost(text);
                     
                   });
                 stream.on('end', (response) => {
@@ -113,9 +118,22 @@ module Twvk {
             });
         }
 
+        private isTweet(text) {
+            return text && text[0] !== '@';
+        }
+    }
+
+    export class Vk {
+        private vk;
+
+        public constructor(vkToken: string) {
+            this.vk = new vksdk({mode: 'oauth'});
+            this.vk.setToken( { token : vkToken });
+        }
 
         //Method uploading photo to VK
-        private uploadPhoto(fileUrl, callback) {
+        public uploadPhoto(fileUrl) {
+            var d = Q.defer();
             // load image from url
             restler.get(fileUrl, {
                 decoding: 'buffer'
@@ -133,27 +151,56 @@ module Twvk {
                         this.vk.request('photos.saveWallPhoto', JSON.parse(data));
                         this.vk.on('done:photos.saveWallPhoto', (data) => {
                             // return photo ID
-                            callback(data.response[0].id);
+                            d.resolve(data.response[0].id);
                         });
                     });
                 });      
             });
+            return d.promise;
+        }
+
+        public wallPost(text: string, photoId?:string) {
+            this.vk.request('wall.post', { 'message': text, 'attachments': photoId });
+        }
+    }
+
+    export class EyeEm {
+        private eyeEmToken: string;
+
+        constructor(eyeEmToken: string) {
+            this.eyeEmToken = eyeEmToken;
         }
 
         //Method getting photo URL from EyeEm
-        private getEyeEmPhotoUrlById(eyeemPhotoId, callback) {
-            var url = 'https://api.eyeem.com/v2/photos/' + eyeemPhotoId + '?access_token=' + this.currentUser.eyeEmToken;
+        public getEyeEmPhotoUrlById(eyeemPhotoId) {
+            var d = Q.defer();
+            var url = 'https://api.eyeem.com/v2/photos/' + eyeemPhotoId + '?access_token=' + this.eyeEmToken;
             restler.get(url).on('complete', (data) => {
                 var fileId = data.photo.file_id;
                 var width = data.photo.width;
                 var height = data.photo.height;
                 var photoUrl = 'https://eyeem.com/thumb/' + width + '/' + height + '/' + fileId;
-                this.uploadPhoto(photoUrl, callback);
+                d.resolve(photoUrl);
             });
+            return d.promise;
+        }
+    }
+
+    export class Facebook {
+        private facebook;
+
+        constructor(accessToken: string) {
+            fb.setAccessToken(accessToken);
         }
 
-        private isTweet(text) {
-            return text && text[0] !== '@';
+        public post(text: string) {
+            fb.api('me/feed', 'post', { message: text }, function (res) {
+                if (!res || res.error) {
+                    console.log(!res ? 'error occurred' : res.error);
+                    return;
+                }
+                console.log('Post Id: ' + res.id);
+            });
         }
     }
 }

@@ -4,7 +4,8 @@
   "description": "Automatic crossposting from twitter to vk.com",
   "main": "twvk.js",
   "dependencies": {
-    "jsonfile": "^2.0.0",
+    "fb": "^0.7.0",
+    "q": "^1.0.1",
     "restler": "^3.2.2",
     "twitter": "^0.2.9",
     "vksdk": "^4.0.0"
@@ -19,6 +20,7 @@
     "grunt-concurrent": "^1.0.0",
     "grunt-contrib-watch": "^0.6.1",
     "grunt-nodemon": "^0.3.0",
-    "grunt-ts": "^1.12.1"
+    "grunt-ts": "^1.12.1",
+    "typescript": "^1.0.1"
   }
 }
