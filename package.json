@@ -8,6 +8,7 @@
     "q": "^1.0.1",
     "restler": "^3.2.2",
     "twitter": "^0.2.9",
+    "underscore": "^1.7.0",
     "vksdk": "^4.0.0"
   },
   "scripts": {
