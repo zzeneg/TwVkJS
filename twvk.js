@@ -39,24 +39,12 @@ var Twvk;
                             var url = urls[i].url;
                             var fullUrl = urls[i].expanded_url;
                             text = text.replace(url, fullUrl);
-                            if (fullUrl.toLowerCase().indexOf('http://eyeem.com/p/') === 0) {
-                                var eyeemPhotoId = fullUrl.toLowerCase().replace("http://eyeem.com/p/", "");
-                            }
                             if (_this.currentUser.ignoreInstagram && fullUrl.toLowerCase().indexOf('instagram') > 0) {
                                 return;
                             }
                         }
                     }
                     var vk = new Vk(_this.currentUser.vkToken);
-                    if (eyeemPhotoId) {
-                        var eyeEm = new EyeEm(_this.currentUser.eyeEmToken);
-                        eyeEm.getEyeEmPhotoUrlById(eyeemPhotoId).then(function (photoUrl) {
-                            vk.uploadPhoto(photoUrl).then(function (photoId) {
-                                vk.wallPost(text, photoId);
-                                return;
-                            });
-                        });
-                    }
                     var media = tweet.entities.media;
                     if (media) {
                         var photoUrl = media[0].media_url;
@@ -121,25 +109,6 @@ var Twvk;
         return Vk;
     })();
     Twvk.Vk = Vk;
-    var EyeEm = (function () {
-        function EyeEm(eyeEmToken) {
-            this.eyeEmToken = eyeEmToken;
-        }
-        EyeEm.prototype.getEyeEmPhotoUrlById = function (eyeemPhotoId) {
-            var d = Q.defer();
-            var url = 'https://api.eyeem.com/v2/photos/' + eyeemPhotoId + '?access_token=' + this.eyeEmToken;
-            restler.get(url).on('complete', function (data) {
-                var fileId = data.photo.file_id;
-                var width = data.photo.width;
-                var height = data.photo.height;
-                var photoUrl = 'https://eyeem.com/thumb/' + width + '/' + height + '/' + fileId;
-                d.resolve(photoUrl);
-            });
-            return d.promise;
-        };
-        return EyeEm;
-    })();
-    Twvk.EyeEm = EyeEm;
     var Facebook = (function () {
         function Facebook(accessToken) {
             fb.setAccessToken(accessToken);

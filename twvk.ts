@@ -24,7 +24,6 @@ module Twvk {
         name: string;
         twitterId: number;
         vkToken: string;
-        eyeEmToken: string;
         sendRetweets: boolean;
         ignoreInstagram: boolean;
     }
@@ -78,9 +77,6 @@ module Twvk {
                             var url = urls[i].url;
                             var fullUrl = urls[i].expanded_url;
                             text = text.replace(url, fullUrl);
-                            if (fullUrl.toLowerCase().indexOf('http://eyeem.com/p/') === 0) {
-                                var eyeemPhotoId = fullUrl.toLowerCase().replace("http://eyeem.com/p/", "");
-                            }
 
                             if (this.currentUser.ignoreInstagram && fullUrl.toLowerCase().indexOf('instagram') > 0) {
                                 return;
@@ -89,16 +85,6 @@ module Twvk {
                     }
 
                     var vk = new Vk(this.currentUser.vkToken);
-
-                    if (eyeemPhotoId) {
-                        var eyeEm = new EyeEm(this.currentUser.eyeEmToken);
-                        eyeEm.getEyeEmPhotoUrlById(eyeemPhotoId).then((photoUrl) => {
-                            vk.uploadPhoto(photoUrl).then((photoId) => {
-                                vk.wallPost(text, photoId);
-                                return;
-                            });
-                        });
-                    }
 
                     var media = tweet.entities.media;
                     if (media) {
@@ -166,28 +152,6 @@ module Twvk {
 
         public wallPost(text: string, photoId?:string) {
             this.vk.request('wall.post', { 'message': text, 'attachments': photoId });
-        }
-    }
-
-    export class EyeEm {
-        private eyeEmToken: string;
-
-        constructor(eyeEmToken: string) {
-            this.eyeEmToken = eyeEmToken;
-        }
-
-        //Method getting photo URL from EyeEm
-        public getEyeEmPhotoUrlById(eyeemPhotoId) {
-            var d = Q.defer();
-            var url = 'https://api.eyeem.com/v2/photos/' + eyeemPhotoId + '?access_token=' + this.eyeEmToken;
-            restler.get(url).on('complete', (data) => {
-                var fileId = data.photo.file_id;
-                var width = data.photo.width;
-                var height = data.photo.height;
-                var photoUrl = 'https://eyeem.com/thumb/' + width + '/' + height + '/' + fileId;
-                d.resolve(photoUrl);
-            });
-            return d.promise;
         }
     }
 
