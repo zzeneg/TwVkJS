@@ -34,10 +34,9 @@ module Twvk {
 
         private currentUser: IUser;
 
-        public static init()
-        {
-            console.log('START')
-            
+        public static init() {
+            console.log('START');
+
             var users = config.users;
             var twit = new twitter(config.twitter);
             var app = new App(twit, users);
@@ -45,7 +44,7 @@ module Twvk {
 
         public constructor(twit: any, users: Array<IUser>) {
             var followIds = '';
-            _.each(users, u => { followIds += u.twitterId + ','} );
+            _.each(users, u => { followIds += u.twitterId + ','; });
 
             twit.stream('statuses/filter', { follow: followIds }, (stream) => {
                 stream.on('data', (tweet) => {
@@ -88,15 +87,14 @@ module Twvk {
                     }
 
                     vk.wallPost(text);
-                    
-                  });
+                });
                 stream.on('end', (response) => {
                     // Обработка разъединения
-                    console.log('end')
+                    console.log('end');
                 });
                 stream.on('destroy', (response) => {
                     // Обработка 'тихого' разъединения от твиттера
-                    console.log('destroy')
+                    console.log('destroy');
                 });
             });
         }
@@ -137,12 +135,12 @@ module Twvk {
                             d.resolve(data.response[0].id);
                         });
                     });
-                });      
+                });
             });
             return d.promise;
         }
 
-        public wallPost(text: string, photoId?:string) {
+        public wallPost(text: string, photoId?: string) {
             this.vk.request('wall.post', { 'message': text, 'attachments': photoId });
         }
     }
