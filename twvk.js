@@ -4,15 +4,16 @@ var restler = require('restler');
 var twitter = require('twitter');
 var vksdk = require('vksdk');
 var fb = require('fb');
+var _ = require('underscore');
 var Twvk;
 (function (Twvk) {
     var App = (function () {
         function App(twit, users) {
             var _this = this;
             var followIds = '';
-            for (var u in users) {
-                followIds += users[u].twitterId + ',';
-            }
+            _.each(users, function (u) {
+                followIds += u.twitterId + ',';
+            });
             twit.stream('statuses/filter', { follow: followIds }, function (stream) {
                 stream.on('data', function (tweet) {
                     console.log(tweet);
@@ -20,12 +21,9 @@ var Twvk;
                     if (!_this.isTweet(text)) {
                         return;
                     }
-                    var userId = tweet.user.id;
-                    for (var u in users) {
-                        if (users[u].twitterId === userId) {
-                            _this.currentUser = users[u];
-                        }
-                    }
+                    _this.currentUser = _.find(users, function (u) {
+                        return u.twitterId === tweet.user.id;
+                    });
                     var retweet = tweet.retweeted_status;
                     if (retweet) {
                         if (!_this.currentUser.sendRetweets) {
@@ -33,16 +31,12 @@ var Twvk;
                         }
                         text = 'RT ' + retweet.user.screen_name + ': ' + retweet.text;
                     }
-                    var urls = tweet.entities.urls;
-                    if (urls) {
-                        for (var i = 0; i < urls.length; i++) {
-                            var url = urls[i].url;
-                            var fullUrl = urls[i].expanded_url;
-                            text = text.replace(url, fullUrl);
-                            if (_this.currentUser.ignoreInstagram && fullUrl.toLowerCase().indexOf('instagram') > 0) {
-                                return;
-                            }
-                        }
+                    _.each(tweet.entities.urls, function (entity) {
+                        var fullUrl = entity.expanded_url;
+                        text = text.replace(entity.url, fullUrl);
+                    });
+                    if (_this.currentUser.ignoreInstagram && text.toLowerCase().indexOf('instagram') > 0) {
+                        return;
                     }
                     var vk = new Vk(_this.currentUser.vkToken);
                     var media = tweet.entities.media;

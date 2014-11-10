@@ -9,6 +9,7 @@ http://api.eyeem.com/v2/oauth/token?grant_type=authorization_code&client_id={CLI
 
 /// <reference path="typings\node\node.d.ts" />
 /// <reference path="typings\q\q.d.ts" />
+/// <reference path="typings\underscore\underscore.d.ts" />
 
 import Q = require('q');
 
@@ -18,6 +19,7 @@ var restler = require('restler');
 var twitter = require('twitter');
 var vksdk = require('vksdk');
 var fb = require('fb');
+var _ = require('underscore');
 
 module Twvk {
     export interface IUser {
@@ -43,24 +45,18 @@ module Twvk {
 
         public constructor(twit: any, users: Array<IUser>) {
             var followIds = '';
-            for(var u in users) {
-                followIds += users[u].twitterId + ',';
-            }
+            _.each(users, u => { followIds += u.twitterId + ','} );
 
             twit.stream('statuses/filter', { follow: followIds }, (stream) => {
                 stream.on('data', (tweet) => {
                     console.log(tweet);
                     var text = tweet.text;
+
                     if (!this.isTweet(text)) {
                         return;
                     }
 
-                    var userId = tweet.user.id;
-                    for (var u in users) {
-                        if (users[u].twitterId === userId) {
-                            this.currentUser = users[u];
-                        }
-                    }
+                    this.currentUser = _.find(users, u => { return u.twitterId === tweet.user.id; });
 
                     var retweet = tweet.retweeted_status;
                     if (retweet) {
@@ -71,17 +67,13 @@ module Twvk {
                         text = 'RT ' + retweet.user.screen_name + ': ' + retweet.text;
                     }
 
-                    var urls = tweet.entities.urls;
-                    if (urls) {
-                        for (var i = 0; i < urls.length; i++) {
-                            var url = urls[i].url;
-                            var fullUrl = urls[i].expanded_url;
-                            text = text.replace(url, fullUrl);
+                    _.each(tweet.entities.urls, (entity: any) => {
+                        var fullUrl = entity.expanded_url;
+                        text = text.replace(entity.url, fullUrl);
+                    });
 
-                            if (this.currentUser.ignoreInstagram && fullUrl.toLowerCase().indexOf('instagram') > 0) {
-                                return;
-                            }
-                        }
+                    if (this.currentUser.ignoreInstagram && text.toLowerCase().indexOf('instagram') > 0) {
+                        return;
                     }
 
                     var vk = new Vk(this.currentUser.vkToken);
