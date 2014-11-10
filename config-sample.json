@@ -1,18 +1,16 @@
 {
-	"twitter": {
-		"consumer_key": "",
-		"consumer_secret": "",
-		"access_token_key": "",
-		"access_token_secret": ""
-	},
-	"users": 
-		[
-			{
-				"name": "",
-				"twitterId": 0,
-				"vkToken": "",
-				"eyeEmToken": "",
-				"sendRetweets": true
-			}
-		]
+    "twitter": {
+        "consumer_key": "",
+        "consumer_secret": "",
+        "access_token_key": "",
+        "access_token_secret": ""
+    },
+    "users": [{
+        "name": "",
+        "twitterId": 0,
+        "vkToken": "",
+        "eyeEmToken": "",
+        "sendRetweets": true,
+        "ignoreInstagram": true
+    }]
 }

@@ -26,6 +26,7 @@ module Twvk {
         vkToken: string;
         eyeEmToken: string;
         sendRetweets: boolean;
+        ignoreInstagram: boolean;
     }
 
     export class App {
@@ -79,6 +80,10 @@ module Twvk {
                             text = text.replace(url, fullUrl);
                             if (fullUrl.toLowerCase().indexOf('http://eyeem.com/p/') === 0) {
                                 var eyeemPhotoId = fullUrl.toLowerCase().replace("http://eyeem.com/p/", "");
+                            }
+
+                            if (this.currentUser.ignoreInstagram && fullUrl.toLowerCase().indexOf('instagram') > 0) {
+                                return;
                             }
                         }
                     }
